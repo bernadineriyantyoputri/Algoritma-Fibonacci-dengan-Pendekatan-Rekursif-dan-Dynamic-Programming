@@ -1,0 +1,56 @@
+#include <iostream>
+#include <unordered_map>
+#include <chrono>
+#include <iomanip>
+
+using namespace std;
+using namespace chrono;
+
+int fibonacci_recursive(int n) {
+    if (n <= 1)
+        return n;
+    return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2);
+}
+
+unordered_map<int, int> memo;
+int fibonacci_dynamic(int n) {
+    if (memo.find(n) != memo.end())
+        return memo[n];
+    if (n <= 1)
+        return n;
+    memo[n] = fibonacci_dynamic(n - 1) + fibonacci_dynamic(n - 2);
+    return memo[n];
+}
+
+double measure_execution_time_per_second(int (*func)(int), int n) {
+    auto start = high_resolution_clock::now();
+    int result = func(n);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<nanoseconds>(stop - start);
+    return 1.0 / (duration.count() / 1e9);
+
+int main() {
+
+    int test_values[] = {10, 25, 30, 40, 50};
+    int num_tests = sizeof(test_values) / sizeof(test_values[0]);
+
+    cout << "n\tRecursive \tDynamic " << endl;
+
+    for (int i = 0; i < num_tests; ++i) {
+        int n = test_values[i];
+        
+        double recursive_per_sec;
+        if (n <= 30) {
+            recursive_per_sec = measure_execution_time_per_second(fibonacci_recursive, n);
+        } else {
+            recursive_per_sec = -1; 
+        }
+        
+        memo.clear();
+        double dynamic_per_sec = measure_execution_time_per_second(fibonacci_dynamic, n);
+
+        cout << n << "\t" << scientific << (recursive_per_sec == -1 ? 0 : recursive_per_sec) << "\t\t" << scientific << dynamic_per_sec << endl;
+    }
+
+    return 0;
+}
